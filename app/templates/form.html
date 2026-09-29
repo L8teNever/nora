@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Nora{% endblock %}
+{% block body %}
+<h1>{{ title }}</h1>
+<p class="lede">Paste the API trigger URL and token from the Claude Code routine modal. Leave URL/token blank to use <code>CLAUDE_ROUTINE_*</code> env defaults.</p>
+
+<form class="card" method="post" action="{{ action }}">
+  <label>Name
+    <input name="name" required maxlength="200" value="{{ routine.name if routine else '' }}" placeholder="Nightly backlog" />
+  </label>
+
+  <fieldset>
+    <legend>Schedule</legend>
+    <label class="inline"><input type="radio" name="schedule_type" value="cron" {% if not routine or routine.schedule_type == 'cron' %}checked{% endif %} /> Cron</label>
+    <label class="inline"><input type="radio" name="schedule_type" value="interval" {% if routine and routine.schedule_type == 'interval' %}checked{% endif %} /> Interval</label>
+    <label>Cron (5-field, UTC unless NORA_TZ is set)
+      <input name="cron_expr" value="{{ routine.cron_expr if routine else '0 6 * * *' }}" placeholder="0 6 * * *" />
+    </label>
+    <div class="row">
+      <label>Every
+        <input name="interval_value" type="number" min="1" value="{% if routine and routine.interval_seconds %}{% if routine.interval_seconds % 3600 == 0 %}{{ routine.interval_seconds // 3600 }}{% else %}{{ routine.interval_seconds // 60 }}{% endif %}{% else %}60{% endif %}" />
+      </label>
+      <label>Unit
+        <select name="interval_unit">
+          <option value="minutes" {% if not routine or routine.interval_seconds % 3600 != 0 %}selected{% endif %}>minutes</option>
+          <option value="hours" {% if routine and routine.interval_seconds and routine.interval_seconds % 3600 == 0 %}selected{% endif %}>hours</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">Minimum interval is 60 seconds. Claude Code’s own schedule trigger has a 1-hour minimum; Nora can fire the <em>API</em> trigger more often, subject to Anthropic rate limits.</p>
+  </fieldset>
+
+  <label>Claude fire URL (optional if env default is set)
+    <input name="fire_url" value="{{ routine.fire_url if routine else '' }}" placeholder="https://api.anthropic.com/v1/claude_code/routines/trig_…/fire" />
+  </label>
+  <label>Bearer token (leave blank to keep existing / use env)
+    <input name="token" type="password" autocomplete="off" placeholder="sk-ant-oat01-…" />
+  </label>
+  <label>Optional fire text (passed as JSON <code>text</code>)
+    <textarea name="fire_text" rows="4" placeholder="Context for this scheduled run">{{ routine.fire_text if routine else '' }}</textarea>
+  </label>
+  <label class="inline">
+    <input type="checkbox" name="enabled" {% if not routine or routine.enabled %}checked{% endif %} /> Enabled
+  </label>
+  <div class="row">
+    <button class="primary" type="submit">Save</button>
+    <a class="btn" href="/">Cancel</a>
+  </div>
+</form>
+{% endblock %}
