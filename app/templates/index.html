@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Nora · schedules{% endblock %}
+{% block body %}
+<section class="hero">
+  <div>
+    <h1>Schedules</h1>
+    <p class="lede">Fire Claude Code routines on cron or interval. Each job POSTs to that routine’s <code>/fire</code> URL with its bearer token.</p>
+  </div>
+  <a class="btn primary" href="/routines/new">New schedule</a>
+</section>
+
+{% if not has_encryption_key %}
+<p class="banner warn">NORA_ENCRYPTION_KEY is empty. You can still use env defaults, but per-job tokens cannot be stored until you set a Fernet key in <code>.env</code>.</p>
+{% endif %}
+{% if not has_defaults %}
+<p class="banner">No default Claude fire URL/token in env. Set them on each job, or add <code>CLAUDE_ROUTINE_FIRE_URL</code> and <code>CLAUDE_ROUTINE_TOKEN</code>.</p>
+{% endif %}
+
+{% if routines %}
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>When</th>
+      <th>Status</th>
+      <th>Last run</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in routines %}
+    <tr>
+      <td>
+        <strong>{{ r.name }}</strong>
+        {% if not r.enabled %}<span class="pill off">disabled</span>{% else %}<span class="pill on">enabled</span>{% endif %}
+      </td>
+      <td><code>{{ r.schedule_label() }}</code></td>
+      <td>
+        {% if r.last_run_status == "ok" %}<span class="ok">ok</span>
+        {% elif r.last_run_status == "error" %}<span class="err">error</span>
+        {% else %}<span class="muted">never</span>{% endif %}
+        {% if r.last_run_error %}<div class="err-detail">{{ r.last_run_error }}</div>{% endif %}
+        {% if r.last_session_url %}<div><a href="{{ r.last_session_url }}" target="_blank" rel="noopener">session</a></div>{% endif %}
+      </td>
+      <td class="muted">{% if r.last_run_at %}{{ r.last_run_at.strftime("%Y-%m-%d %H:%M UTC") }}{% else %}—{% endif %}</td>
+      <td class="actions">
+        <form method="post" action="/routines/{{ r.id }}/run"><button type="submit">Run</button></form>
+        <a class="btn" href="/routines/{{ r.id }}/edit">Edit</a>
+        <form method="post" action="/routines/{{ r.id }}/toggle"><button type="submit">{% if r.enabled %}Disable{% else %}Enable{% endif %}</button></form>
+        <form method="post" action="/routines/{{ r.id }}/delete" onsubmit="return confirm('Delete this schedule?');"><button class="danger" type="submit">Delete</button></form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No schedules yet. Create one after you copy the fire URL and token from <a href="https://claude.ai/code/routines">claude.ai/code/routines</a>.</p>
+{% endif %}
+{% endblock %}
