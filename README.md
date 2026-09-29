@@ -48,6 +48,12 @@ Then:
 docker compose up --build
 ```
 
+For the Docker volume, keep four slashes so SQLite lives at `/data/nora.sqlite3` inside the container:
+
+```bash
+NORA_DATABASE_URL=sqlite:////data/nora.sqlite3
+```
+
 Open http://127.0.0.1:8080 — list / create / edit / enable / disable / delete / run-now.
 
 **Dockge:** create a stack from this repo’s `docker-compose.yml`, point the compose path at the cloned project, and set env vars in Dockge’s env editor (not in a committed file). Keep the published port on a private Docker network if Tunnel is the only ingress.
