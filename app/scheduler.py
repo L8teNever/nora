@@ -8,9 +8,9 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.orm import Session
 
+from app import db as db_module
 from app.claude import ClaudeFireError, fire_routine
 from app.config import get_settings
-from app.db import get_engine, SessionLocal
 from app.models import Routine
 
 logger = logging.getLogger("nora.scheduler")
@@ -23,8 +23,8 @@ def _job_id(routine_id: int) -> str:
 
 
 def run_routine_job(routine_id: int) -> None:
-    get_engine()
-    db: Session = SessionLocal()
+    db_module.get_engine()
+    db: Session = db_module.SessionLocal()
     try:
         routine = db.get(Routine, routine_id)
         if routine is None or not routine.enabled:
@@ -86,8 +86,8 @@ def remove_job(routine_id: int) -> None:
 
 
 def reload_all() -> None:
-    get_engine()
-    db = SessionLocal()
+    db_module.get_engine()
+    db = db_module.SessionLocal()
     try:
         for routine in db.query(Routine).all():
             try:
